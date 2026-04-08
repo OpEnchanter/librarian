@@ -1,10 +1,17 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import { verifyUser, getUser } from "@/app/lib/database";
 
+type userData = {
+    username: string,
+    password: string,
+    id: number
+}
 
-async function verifyUser(username: string, password: string) {
-    if (username === "user" && password === "abcd") {
-        return { id: "1", username, name: "Testing User" }
+async function verify(username: string, password: string) {
+    if (await verifyUser(username, password)) {
+        const user = await getUser(username) as userData;
+        return { id: user.id.toString(), username }
     }
     return null;
 }
@@ -26,7 +33,7 @@ const handler = NextAuth({
 
                 if (!username || !password) return null;
 
-                const user = verifyUser(username, password);
+                const user = verify(username, password);
                 return user;
             }
         })

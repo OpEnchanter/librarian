@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 
@@ -12,10 +14,12 @@ export default async function Home() {
           </div>
           <div className="spacer"></div>
           <div className="content">
-            {["a", "b", "c", "c", "c", "c", "C"].map((x) => (
-                  <div className="book-card" key={x}>{x}</div>
+            {["a", "b", "c", "d", "e", "f", "g", "h", "i"].map((x) => (
+                  <BookCard key={x}>{x}</BookCard>
             ))}
           </div>
       </>
   );
 }
+
+import BookCard from "./BookCard";
