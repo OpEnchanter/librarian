@@ -1,5 +1,3 @@
-import Image from "next/image";
-
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 
@@ -8,6 +6,16 @@ export default async function Home() {
     if (!session) redirect("/login");
 
   return (
-      <h1>Hello world!</h1>
+      <>
+          <div className="navbar">
+            <div className="user">U</div>
+          </div>
+          <div className="spacer"></div>
+          <div className="content">
+            {["a", "b", "c", "c", "c", "c", "C"].map((x) => (
+                  <div className="book-card" key={x}>{x}</div>
+            ))}
+          </div>
+      </>
   );
 }
