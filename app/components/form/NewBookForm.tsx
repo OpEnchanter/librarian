@@ -1,6 +1,7 @@
 "use client"
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { addBook, type bookData } from "@/app/lib/database";
+import { isbnSearch } from "@/app/actions";
 
 export default function NewBook() {
     const [title, setTitle] = useState("");
@@ -14,11 +15,25 @@ export default function NewBook() {
     const [format, setFormat] = useState("");
     const [originalLanguage, setOriginalLanguage] = useState("");
 
-    const [isOpen, setIsOpen] = useState(false);
-    const openModal = () => setIsOpen(true);
-    const closeModal = () => setIsOpen(false);
+    const [isAddBookOpen, setIsAddBookOpen] = useState(false);
+    const openAddBookModal = () => setIsAddBookOpen(true);
+    const closeAddBookModal = () => setIsAddBookOpen(false);
 
-    async function onSubmit(e: React.FormEvent) {
+    const [isSelectAdditionMethodOpen, setIsSelectAdditionMethodOpen] = useState(false);
+    const openSelectAdditionMethodModal = () => setIsSelectAdditionMethodOpen(true);
+    const closeSelectAdditionMethodModal = () => setIsSelectAdditionMethodOpen(false);
+
+    const [isManualISBNOpen, setIsManualISBNOpen] = useState(false);
+    const openManualISBNModal = () => setIsManualISBNOpen(true);
+    const closeManualISBNModal = () => setIsManualISBNOpen(false);
+
+    const [isBarcodeSearchOpen, setIsBarcodeSearchOpen] = useState(false);
+    const openBarcodeSearch = () => setIsBarcodeSearchOpen(true);
+    const closeBarcodeSearch = () => setIsBarcodeSearchOpen(false);
+
+    const [isbnQuery, setIsbnQuery] = useState("");
+
+    async function addBookSubmit(e: React.FormEvent) {
         e.preventDefault();
 
         const data: bookData = {
@@ -37,18 +52,128 @@ export default function NewBook() {
 
         console.log("Added a book!");
 
-        closeModal();
+        closeAddBookModal();
     }
 
+    async function isbnSearchSubmit(e: React.FormEvent) {
+        e.preventDefault();
+        const res = await isbnSearch(isbnQuery);
+        setTitle(res.title);
+        setAuthor(res.author);
+        setIsbn(isbnQuery);
+        setPageCount(res.pages);
+        setPubDate(res.publishDate);
+        console.log(res);
+        closeManualISBNModal();
+        openAddBookModal();
+    }
+
+    const videoRef = useRef<HTMLVideoElement | null>(null);
+    const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+    useEffect(() => {
+        if (!isBarcodeSearchOpen) return;
+
+        // Initialize barcode detector
+        if ("BarcodeDetector" in globalThis) {
+            console.log("Initializing barcode detector!");
+            const barcodeDetector = new BarcodeDetector({
+                formats: ["ean_13"]
+            })
+            
+            const canvas: HTMLCanvasElement = canvasRef.current as HTMLCanvasElement;
+            if (!canvas) return;
+            const ctx = canvas.getContext("2d", { willReadFrequently: true });
+
+            setInterval(async () => {
+                const barcodes = await barcodeDetector.detect(canvas);
+                if (barcodes.length) {
+                    console.log(barcodes[0].rawValue);
+                }
+            }, 100);
+        }
+        
+        // Draw camera frames to canvas
+        let animationFrameId: number;
+
+        const startCamera = async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+                if (videoRef.current) {
+                    videoRef.current.srcObject = stream
+                }
+            } catch (err) {
+                console.error("Camera access denied:", err);
+            }
+        };
+
+        const renderFrame = () => {
+            const video = videoRef.current;
+            const canvas = canvasRef.current;
+            if (video && canvas && video.readyState === video.HAVE_ENOUGH_DATA) {
+                const ctx = canvas.getContext("2d");
+                if (!ctx) return;
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            }
+            animationFrameId = requestAnimationFrame(renderFrame);
+        };
+
+        startCamera();
+        renderFrame();
+
+        return () => {
+            cancelAnimationFrame(animationFrameId);
+        };
+    }, [isBarcodeSearchOpen]);
+
+    
     return (
         <>
-            <button className="add" onClick={() => openModal()}>+</button>
-            {isOpen && (
+            <button className="add" onClick={() => openSelectAdditionMethodModal()}>+</button>
+            {isBarcodeSearchOpen && (
                 <>
-                    <div className="backdrop" onClick={() => closeModal()}></div>
+                    <div className="backdrop" onClick={() => {closeBarcodeSearch()}}></div>
+                    <div className="modal settings">
+                        <h2>Barcode Search</h2>
+                        <video ref={videoRef} autoPlay playsInline style={{ display: 'none' }} />
+                        <canvas
+                            ref={canvasRef}
+                            width={640}
+                            height={480}
+                        ></canvas>
+                    </div>
+                </>
+            )}
+            {isSelectAdditionMethodOpen && (
+                <>
+                    <div className="backdrop" onClick={() => {closeSelectAdditionMethodModal()}}></div>
+                    <div className="modal settings">
+                        <h2>Book Addition Method</h2>
+                        <button onClick={() => {closeSelectAdditionMethodModal(); openAddBookModal()}}>Manual Info Entry</button>
+                        <button onClick={() => {closeSelectAdditionMethodModal(); openManualISBNModal()}}>Manual ISBN Search</button>
+                        <button onClick={() => {closeSelectAdditionMethodModal(); openBarcodeSearch()}}>ISBN Barcode Search</button>
+                    </div>
+                </>
+            )}
+            {isManualISBNOpen && (
+                <>
+                    <div className="backdrop" onClick={() => {closeManualISBNModal()}}></div>
+                    <div className="modal settings">
+                        <h2>Manual ISBN Search</h2>
+                        <form onSubmit={isbnSearchSubmit}>
+                            <p>ISBN</p>
+                            <input value={isbnQuery} onChange={(e) => {setIsbnQuery(e.target.value)}} type="text" id="isbnQuery" name="isbnQuery" placeholder="ISBN" />
+                            <button type="submit" className="spaced">Search</button>
+                        </form>
+                    </div>
+                </>
+            )}
+            {isAddBookOpen && (
+                <>
+                    <div className="backdrop" onClick={() => closeAddBookModal()}></div>
                     <div className="modal settings">
                         <h2>Add Book</h2>
-                        <form onSubmit={onSubmit}>
+                        <form onSubmit={addBookSubmit}>
                             <div className="scrollable">
                                 <h3>General Info</h3>
                                 <p>ISBN</p>
@@ -62,7 +187,7 @@ export default function NewBook() {
                                 <p>Publication Date</p>
                                 <input value={pubDate} onChange={(e) => setPubDate(e.target.value)} type="date" id="pubDate" name="pubDate" placeholder="Publication Date"/>
                                 <p>Pages</p>
-                                <input value={pageCount} onChange={(e) => setPageCount(e.target.value)} type="number" id="pageCount" name="pageCount" placeholder="Page Count"/>
+                                <input value={pageCount} onChange={(e) => setPageCount(parseInt(e.target.value))} type="number" id="pageCount" name="pageCount" placeholder="Page Count"/>
                                 <h3>Logistics</h3>
                                 <p>Location (shelf, room, Audible, Kindle, etc.)</p>
                                 <input value={bookLocation} onChange={(e) => setLocation(e.target.value)} type="text" id="bookLocation" name="bookLocation" placeholder="Location (shelf, room, etc.)"/>
@@ -79,11 +204,12 @@ export default function NewBook() {
                                 <p>Original Language</p>
                                 <input value={originalLanguage} onChange={(e) => setOriginalLanguage(e.target.value)} type="text" id="originalLanguage" name="originalLanguage" placeholder="Original Language"/>
                             </div>
-                            <button type="submit">Add Book</button>
+                            <button type="submit" className="spaced">Add Book</button>
                         </form>
                     </div>
                 </>
             )}
+
         </>
     )
 }

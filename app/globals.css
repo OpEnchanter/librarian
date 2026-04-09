@@ -107,6 +107,12 @@ body {
 
         height: 75vh;
 
+        canvas {
+            border-radius: var(--br-med);
+            background: var(--bg-light);
+            border: 1px solid var(--border);
+        }
+
         h2 {
             margin: 0px;
             padding: 0px;
@@ -119,7 +125,7 @@ body {
             justify-content: start;
         }
 
-        button {
+        .spaced {
             margin-top: auto
         }
 
@@ -285,6 +291,9 @@ h1 {
 
         align-items: center;
         justify-content: center;
+
+        background-repeat: no-repeat;
+        background-size: cover;
 
         &:hover {
             transform: scale(1.05);

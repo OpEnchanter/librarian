@@ -17,6 +17,7 @@ type userData = {
 }
 
 export type bookData = {
+    id: number,
     title: string,
     author: string,
     isbn: string,
