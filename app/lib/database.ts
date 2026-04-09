@@ -16,7 +16,7 @@ type userData = {
     id: number
 }
 
-type bookData = {
+export type bookData = {
     title: string,
     author: string,
     isbn: string,
