@@ -4,7 +4,7 @@ import { addBook, type bookData } from "@/app/lib/database";
 import { isbnSearch } from "@/app/actions";
 
 import Icon from '@mdi/react';
-import { mdiPlus } from '@mdi/js';
+import { mdiCamera, mdiPlus } from '@mdi/js';
 
 import { BarcodeDetector } from "barcode-detector/ponyfill";
 
@@ -189,6 +189,9 @@ export default function NewBook() {
         <>
             <button className="add" onClick={() => openSelectAdditionMethodModal()}>
                 <Icon path={mdiPlus} size={1.5} />
+            </button>
+            <button className="add camera" onClick={() => openBarcodeSearch()}>
+                <Icon path={mdiCamera} size={1} />
             </button>
             {isLoadingOpen && (
                 <>

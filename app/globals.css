@@ -357,6 +357,14 @@ h1 {
 
     line-height: 0px;
 
+    &.camera {
+        width: 2.5rem;
+        height: 2.5rem;
+        bottom: calc(5.5rem + 12px);
+        right: calc(1.5rem + (4rem - 2.5rem) / 2);
+        border-radius: var(--br-small);
+    }
+
     &:hover {
         background: none;
         border: 2px solid var(--border);
