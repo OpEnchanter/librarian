@@ -3,6 +3,7 @@ import { Database } from "bun:sqlite";
 import { NextResponse } from "next/server";
 
 const db = new Database("library.sqlite");
+let init = false;
 
 type dbQuery = {
     "COUNT(*)": number,
@@ -15,14 +16,25 @@ type userData = {
     id: number
 }
 
+type bookData = {
+    title: string,
+    author: string,
+    isbn: string,
+    translator: string,
+    pubDate: string,
+    pageCount: number,
+    genre: string,
+    format: string,
+    originalLanguage: string
+}
+
 function initDB() {
-    db.run("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username STRING, password STRING, permission INTEGER)")
-    db.run("CREATE TABLE IF NOT EXISTS books (isbn INTEGER PRIMARY KEY, name STRING, publication_date STRING, cover_art STRING, current_page INTEGER, finished BOOLEAN, value FLOAT)")
-    console.log("[Library] init", {
-        pid: process.pid,
-        cwd: process.cwd(),
-        time: new Date().toISOString(),
-  });
+    if (!init) {
+        db.run("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username STRING, password STRING, permission INTEGER)")
+        db.run("CREATE TABLE IF NOT EXISTS books (id INTEGER PRIMARY KEY, title STRING, author STRING, isbn STRING, translator STRING, pubDate STRING, pageCount INTEGER, genre STRING, format STRING, originalLanguage STRING)")
+        console.log("[Library] init");
+        init = true;
+    }
 }
 
 initDB();
@@ -63,6 +75,23 @@ export async function verifyUser(username: string, password: string): Promise<bo
     return auth;
 }
 
-export async function GET() {
-    return NextResponse.json({ status: "DB Loaded" });
+export async function getLargestBookID() {
+    const largestBookId = db.query("SELECT MAX(id) FROM books").get();
+    return (largestBookId as dbQuery)["MAX(id)"];
+}
+
+export async function addBook(data: bookData) {
+    let id = await getLargestBookID();
+    if (id === null) id = -1;
+    id++;
+
+    db.run(
+        "INSERT INTO books (id, title, author, isbn, translator, pubDate, pageCount, genre, format, originalLanguage) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", 
+        [id, data.title, data.author, data.isbn, data.translator, data.pubDate, data.pageCount, data.genre, data.format, data.originalLanguage]
+    );
+}
+
+export async function getBooks() {
+    const books = db.query("SELECT * FROM books").all();
+    return books;
 }

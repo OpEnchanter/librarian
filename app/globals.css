@@ -3,7 +3,7 @@
     --bg: #1a1a1a;
     --bg-light: #2a2a2a;
 
-    --warning: #fa1f1cca;
+    --warning: #ff4f5f;
 
     --accent: #001910;
 
@@ -40,6 +40,7 @@
 
 body {
     display: flex;
+    flex-direction: column;
     width: 100vw;
     height: 100vh;
     background: radial-gradient(circle 512px at top center, var(--accent), var(--bg-dark));
@@ -89,6 +90,47 @@ body {
         max-width: 502;
         max-height: 412;
     }
+
+    p {
+        margin: 0px;
+        margin-bottom: 4px;
+        font-size: 14px;
+        padding: 0px;
+    }
+
+    &.settings {
+        align-items: left;
+        justify-content: start;
+        
+        max-width: 650px;
+        max-height: 650px;
+
+        height: 75vh;
+
+        h2 {
+            margin: 0px;
+            padding: 0px;
+        }
+
+        form {
+            padding: 0px;
+
+            align-items: left;
+            justify-content: start;
+        }
+
+        button {
+            margin-top: auto
+        }
+
+        .scrollable {
+            display: flex;
+            flex-direction: column;
+            gap: var(--pad-small);
+            overflow: scroll;
+            width: 100%;
+        }
+    }
 }
 
 input {
@@ -105,6 +147,22 @@ input {
 
     color: var(--fg);
 }
+
+select {
+    position: relative;
+    display: flex;
+    align-items: left;
+    
+    background: var(--bg-light);
+
+    border: none;
+    border-radius: var(--br-small);
+
+    padding: var(--pad-small);
+
+    color: var(--fg);
+}
+
 
 button {
     position: relative;
@@ -140,7 +198,7 @@ h1 {
     display: flex;
     justify-content: left;
     align-items: center;
-    width: calc(100vw - 2 * var(--pad-small));
+    width: calc(100vw - 2 * 1.5rem);
     height: 48px;
 
     border-radius: var(--br-large);
@@ -191,6 +249,8 @@ h1 {
     display: flex;
     position: relative;
 
+    justify-content: center;
+
     flex-direction: row;
 
     width: calc(100vw - (2 * var(--pad-small)));
@@ -199,21 +259,21 @@ h1 {
 
     margin-left: var(--pad-small);
 
-    padding-left: calc((100cqw - round(down, 100cqw, 150px + var(--pad-small))) / 2);
     padding-right: auto;
     overflow-x: hidden;
 
-    box-sizing: border;
+    box-sizing: border-box;
     padding-bottom: var(--pad-small);
     padding-top: var(--pad-small);
 
     flex-wrap: wrap;
 
     & .book-card {
+        display: flex;
         width: 150px;
         aspect-ratio: 2/3;
 
-        border-radius: var(--br-small);
+        border-radius: var(--br-med);
 
         box-sizing: border-box;
 
@@ -222,6 +282,9 @@ h1 {
         background: var(--bg);
 
         transition: transform 150ms ease;
+
+        align-items: center;
+        justify-content: center;
 
         &:hover {
             transform: scale(1.05);
@@ -257,6 +320,49 @@ h1 {
     &.active {
         top: 32px;
     }
+}
+
+.add {
+    width: 4rem;
+    height: 4rem;
+    display: flex;
+    position: absolute;
+
+    background: white;
+
+    color: black;
+    font-size: 48px;
+
+    padding: 0px;
+    margin: 0px;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: var(--br-med);
+
+    border: none;
+
+    bottom: 1.5rem;
+    right: 1.5rem;
+
+    &:hover {
+        background: none;
+        border: 2px solid var(--border);
+        color: white;
+    }
+}
+
+.backdrop {
+    position: absolute;
+    width: 100vw;
+    height: 100vh;
+    padding: 0;
+    margin: 0;
+    top: 0;
+    left: 0;
+
+    background: #0000004b;
 }
 
 @media (width <= 400px) {
