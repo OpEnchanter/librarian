@@ -16,7 +16,7 @@ async function verify(username: string, password: string) {
     return null;
 }
 
-process.env.NEXTAUTH_URL ||= "http://localhost:3000";
+process.env.NEXTAUTH_URL ||= "https://yersinia-pestis.tailce381.ts.net/";
 process.env.NEXTAUTH_SECRET ||= "09ade16d9e0c4ba17bd049be5a5bc6c3aeb700f592df114c8ffa5c353ba36de2";
 
 const handler = NextAuth({

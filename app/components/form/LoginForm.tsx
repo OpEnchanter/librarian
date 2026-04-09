@@ -30,7 +30,7 @@ export default function Login() {
             return
         }
         
-        window.location.href = res.url ?? "/";
+        window.location.assign("/");
     }
 
     return (

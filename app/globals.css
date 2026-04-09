@@ -355,6 +355,8 @@ h1 {
     bottom: 1.5rem;
     right: 1.5rem;
 
+    line-height: 0px;
+
     &:hover {
         background: none;
         border: 2px solid var(--border);

@@ -3,6 +3,13 @@ import { useState, useEffect, useRef } from "react";
 import { addBook, type bookData } from "@/app/lib/database";
 import { isbnSearch } from "@/app/actions";
 
+import Icon from '@mdi/react';
+import { mdiPlus } from '@mdi/js';
+
+import { BarcodeDetector } from "barcode-detector/ponyfill";
+
+import { useRouter } from "next/navigation";
+
 export default function NewBook() {
     const [title, setTitle] = useState("");
     const [author, setAuthor] = useState("");
@@ -32,7 +39,13 @@ export default function NewBook() {
     const openBarcodeSearch = () => setIsBarcodeSearchOpen(true);
     const closeBarcodeSearch = () => setIsBarcodeSearchOpen(false);
 
+    const [isLoadingOpen, setIsLoadingOpen] = useState(false);
+    const openLoading = () => setIsLoadingOpen(true);
+    const closeLoading = () => setIsLoadingOpen(false);
+
     const [isbnQuery, setIsbnQuery] = useState("");
+
+    const router = useRouter();
 
     async function addBookSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -55,10 +68,14 @@ export default function NewBook() {
         console.log("Added a book!");
 
         closeAddBookModal();
+
+        router.refresh();
     }
 
     async function isbnSearchSubmit(e: React.FormEvent) {
         e.preventDefault();
+        closeManualISBNModal();
+        openLoading();
         const res = await isbnSearch(isbnQuery);
         setTitle(res.title);
         setAuthor(res.author);
@@ -67,41 +84,79 @@ export default function NewBook() {
         setPubDate(res.publishDate);
         setCoverArt(res.coverArt);
         console.log(res);
-        closeManualISBNModal();
+        closeLoading();
+        openAddBookModal();
+    }
+
+    async function barcodeSearchSubmit(isbn: string) {
+        closeBarcodeSearch();
+        openLoading();
+
+        const res = await isbnSearch(isbn);
+        setTitle(res.title);
+        setAuthor(res.author);
+        setIsbn(isbnQuery);
+        setPageCount(res.pages);
+        setPubDate(res.publishDate);
+        setCoverArt(res.coverArt);
+        setIsbn(isbn);
+
+        closeLoading();
         openAddBookModal();
     }
 
     const videoRef = useRef<HTMLVideoElement | null>(null);
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
+    const streamRef = useRef<MediaStream | null>(null);
+    const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     useEffect(() => {
-        if (!isBarcodeSearchOpen) return;
+        if (!isBarcodeSearchOpen) {
+            if (streamRef.current) {
+                streamRef.current.getTracks().forEach((t) => {t.stop()});
+            }
+            
+            const video = videoRef.current;
+            if (video) {
+                video.srcObject = null;
+            }
+            
+            if (intervalRef.current) {
+                clearInterval(intervalRef.current);
+                intervalRef.current = null;
+            }
+            return
+        };
 
         // Initialize barcode detector
-        if ("BarcodeDetector" in globalThis) {
-            console.log("Initializing barcode detector!");
-            const barcodeDetector = new BarcodeDetector({
-                formats: ["ean_13"]
-            })
-            
-            const canvas: HTMLCanvasElement = canvasRef.current as HTMLCanvasElement;
-            if (!canvas) return;
-            const ctx = canvas.getContext("2d", { willReadFrequently: true });
+        console.log("Initializing barcode detector!");
+        const barcodeDetector = new BarcodeDetector({
+            formats: ["ean_13"]
+        })
+        
+        const canvas: HTMLCanvasElement = canvasRef.current as HTMLCanvasElement;
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d", { willReadFrequently: true });
 
-            setInterval(async () => {
-                const barcodes = await barcodeDetector.detect(canvas);
-                if (barcodes.length) {
-                    console.log(barcodes[0].rawValue);
-                }
-            }, 100);
-        }
+        intervalRef.current = setInterval(async () => {
+            const barcodes = await barcodeDetector.detect(canvas);
+            if (barcodes.length) {
+                console.log(barcodes[0].rawValue);
+                barcodeSearchSubmit(barcodes[0].rawValue);
+            }
+            console.log("scanning...");
+        }, 100);
         
         // Draw camera frames to canvas
         let animationFrameId: number;
 
         const startCamera = async () => {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: { ideal: "environment" } }, 
+                    audio: false 
+                })
+                streamRef.current = stream;
                 if (videoRef.current) {
                     videoRef.current.srcObject = stream
                 }
@@ -132,7 +187,17 @@ export default function NewBook() {
     
     return (
         <>
-            <button className="add" onClick={() => openSelectAdditionMethodModal()}>+</button>
+            <button className="add" onClick={() => openSelectAdditionMethodModal()}>
+                <Icon path={mdiPlus} size={1.5} />
+            </button>
+            {isLoadingOpen && (
+                <>
+                    <div className="backdrop"></div>
+                    <div className="modal settings">
+                        <h2>Loading...</h2>
+                    </div>
+                </>
+            )}
             {isBarcodeSearchOpen && (
                 <>
                     <div className="backdrop" onClick={() => {closeBarcodeSearch()}}></div>
