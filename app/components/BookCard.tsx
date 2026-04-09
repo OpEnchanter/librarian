@@ -2,8 +2,9 @@
 
 import type { ReactNode } from "react";
 
-export default function BookCard({ bookIsbn, bookName, children }: { bookIsbn: string, bookName: string, children: React.ReactNode }) {
+export default function BookCard({ bookIsbn, bookName, coverArtUrl, children }: { bookIsbn: string, bookName: string, coverArtUrl: string , children: React.ReactNode }) {
+    console.log(coverArtUrl);
     return (
-        <div className="book-card" style={{ backgroundImage: `url(https://covers.openlibrary.org/b/isbn/${bookIsbn}-M.jpg)` }}></div>
+        <div className="book-card" style={{ backgroundImage: `url(${coverArtUrl})` }}>{coverArtUrl ? "" : bookName}</div>
     )
 }

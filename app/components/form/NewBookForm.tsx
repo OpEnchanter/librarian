@@ -14,6 +14,7 @@ export default function NewBook() {
     const [genre, setGenre] = useState("");
     const [format, setFormat] = useState("");
     const [originalLanguage, setOriginalLanguage] = useState("");
+    const [coverArt, setCoverArt] = useState<string | null>(null);
 
     const [isAddBookOpen, setIsAddBookOpen] = useState(false);
     const openAddBookModal = () => setIsAddBookOpen(true);
@@ -45,7 +46,8 @@ export default function NewBook() {
             pageCount: pageCount,
             genre: genre,
             format: format,
-            originalLanguage: originalLanguage
+            originalLanguage: originalLanguage,
+            coverArt: coverArt
         } as bookData
 
         await addBook(data);
@@ -63,6 +65,7 @@ export default function NewBook() {
         setIsbn(isbnQuery);
         setPageCount(res.pages);
         setPubDate(res.publishDate);
+        setCoverArt(res.coverArt);
         console.log(res);
         closeManualISBNModal();
         openAddBookModal();

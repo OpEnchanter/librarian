@@ -26,13 +26,14 @@ export type bookData = {
     pageCount: number,
     genre: string,
     format: string,
-    originalLanguage: string
+    originalLanguage: string,
+    coverArt: string
 }
 
 function initDB() {
     if (!init) {
         db.run("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username STRING, password STRING, permission INTEGER)")
-        db.run("CREATE TABLE IF NOT EXISTS books (id INTEGER PRIMARY KEY, title STRING, author STRING, isbn STRING, translator STRING, pubDate STRING, pageCount INTEGER, genre STRING, format STRING, originalLanguage STRING)")
+        db.run("CREATE TABLE IF NOT EXISTS books (id INTEGER PRIMARY KEY, title STRING, author STRING, isbn STRING, translator STRING, pubDate STRING, pageCount INTEGER, genre STRING, format STRING, originalLanguage STRING, coverArt STRING)")
         console.log("[Library] init");
         init = true;
     }
@@ -87,8 +88,8 @@ export async function addBook(data: bookData) {
     id++;
 
     db.run(
-        "INSERT INTO books (id, title, author, isbn, translator, pubDate, pageCount, genre, format, originalLanguage) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", 
-        [id, data.title, data.author, data.isbn, data.translator, data.pubDate, data.pageCount, data.genre, data.format, data.originalLanguage]
+        "INSERT INTO books (id, title, author, isbn, translator, pubDate, pageCount, genre, format, originalLanguage, coverArt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", 
+        [id, data.title, data.author, data.isbn, data.translator, data.pubDate, data.pageCount, data.genre, data.format, data.originalLanguage, data.coverArt]
     );
 }
 

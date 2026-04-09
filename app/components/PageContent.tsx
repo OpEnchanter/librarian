@@ -7,7 +7,7 @@ export default function PageContent({ books }: { books: bookData[] }) {
     return (
         <div className="content">
             {books.map((b: bookData) => (
-                <BookCard bookIsbn={b.isbn} bookName={b.title} key={b.id}>{b.title}</BookCard>
+                <BookCard bookIsbn={b.isbn} bookName={b.title} coverArtUrl={b.coverArt} key={b.id}>{b.title}</BookCard>
             ))}
         </div>
     )

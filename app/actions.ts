@@ -5,7 +5,8 @@ export type searchResult = {
     title: string,
     pages: number,
     publishDate: string,
-    publishers: string[]
+    publishers: string[],
+    coverArt: string | null
 }
 
 type doc = {
@@ -38,25 +39,36 @@ export async function isbnSearch(isbn: string) {
     const body = await res.json();
     const isbnSearch = body as isbnSearchResult;
     console.log(isbnSearch);
-    const editionKeys = isbnSearch.docs[0].edition_key;
+    const editionKeys = Array.isArray(isbnSearch.docs[0]?.edition_key) ? isbnSearch.docs[0].edition_key : [];
     const workTitle = isbnSearch.docs[0].title;
     const workAuthor = isbnSearch.docs[0].author_name[0];
 
     let bookSearchResult: bookSearchResult = {} as bookSearchResult;
     
     console.log("[Library] Iterating editions")
-    for (const key of editionKeys) {
-        console.log(`   -> Checking Edition: ${key}`)
-        const res = await fetch(`https://openlibrary.org/books/${key}.json`);
-        const body = await res.json();
-        const fullSearchResult = body as bookSearchResult;
+    editionKeys.length = (editionKeys.length > 40) ? 40 : editionKeys.length;
+    try {
+        for (const key of editionKeys) {
+            console.log(`   -> Checking Edition: ${key}`)
+            const res = await fetch(`https://openlibrary.org/books/${key}.json`);
+            const body = await res.json();
+            const fullSearchResult = body as bookSearchResult;
 
 
-        if (!Array.isArray(fullSearchResult?.isbn_13) || !fullSearchResult.isbn_13[0].includes(isbn)) continue;
-        console.log("[Library] Found correct edition!")
-        bookSearchResult = fullSearchResult;
-        break;
+            if (!Array.isArray(fullSearchResult?.isbn_13) || !fullSearchResult.isbn_13[0].includes(isbn)) continue;
+            console.log("[Library] Found correct edition!")
+            bookSearchResult = fullSearchResult;
+            break;
+        }
+    } catch {
+        console.log("An error occurred while fetching editions.");
     }
+
+    let coverArtUrl: string | null = `https://covers.openlibrary.org/b/isbn/${isbn}-M.jpg`;
+    const coverRes = await fetch(coverArtUrl, { method: 'GET', cache: 'no-store' });
+    const buf = Buffer.from(await coverRes.arrayBuffer());
+    if (buf.byteLength <= 100) coverArtUrl = null;
+    console.log(coverArtUrl);
 
     if (bookSearchResult) {
          return {
@@ -64,12 +76,14 @@ export async function isbnSearch(isbn: string) {
             title: workTitle,
             pages: parseInt(bookSearchResult.pagination),
             publishDate: bookSearchResult.publish_date,
-            publishers: bookSearchResult.publishers
+            publishers: bookSearchResult.publishers,
+            coverArt: coverArtUrl
         } as searchResult
     } else {
         return {
             author: workAuthor,
             title: workTitle,
+            coverArt: coverArtUrl
         } as searchResult
     }
 }
