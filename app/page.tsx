@@ -14,12 +14,12 @@ export default async function Home() {
 
   return (
       <>
+          <NewBookForm></NewBookForm>
           <div className="navbar">
             <div className="user">U</div>
           </div>
           <div className="spacer"></div>
           <PageContent books={books as bookData[]}></PageContent>
-          <NewBookForm></NewBookForm>
       </>
   );
 }

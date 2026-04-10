@@ -60,7 +60,8 @@ export default function NewBook() {
             genre: genre,
             format: format,
             originalLanguage: originalLanguage,
-            coverArt: coverArt
+            coverArt: coverArt,
+            location: bookLocation
         } as bookData
 
         await addBook(data);

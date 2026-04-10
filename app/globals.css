@@ -51,7 +51,7 @@ body {
 }
 
 .modal {
-    position: absolute;
+    position: fixed;
     display: flex;
     align-items: left;
     justify-content: center;
@@ -74,6 +74,8 @@ body {
 
     gap: var(--pad-small);
 
+    z-index: 9999;
+
     form {
         width: 100%;
         height: 100%;
@@ -84,6 +86,13 @@ body {
         gap: var(--pad-small);
 
         justify-content: center;
+    }
+
+    & .horizontal {
+        display: flex;
+        flex-direction: row;
+
+        gap: var(--pad-small);
     }
 
     &.auth {
@@ -175,6 +184,8 @@ button {
     display: flex;
     align-items: center;
     justify-content: center;
+
+    width: 100%;
 
     transition: background 150ms ease;
     
@@ -274,6 +285,8 @@ h1 {
 
     flex-wrap: wrap;
 
+    
+
     & .book-card {
         display: flex;
         width: 150px;
@@ -294,6 +307,8 @@ h1 {
 
         background-repeat: no-repeat;
         background-size: cover;
+
+        overflow: visible;
 
         &:hover {
             transform: scale(1.05);
@@ -373,7 +388,7 @@ h1 {
 }
 
 .backdrop {
-    position: absolute;
+    position: fixed;
     width: 100vw;
     height: 100vh;
     padding: 0;
@@ -382,6 +397,23 @@ h1 {
     left: 0;
 
     background: #0000004b;
+
+    z-index: 9998;
+}
+
+.delete {
+    color: white;
+    background: var(--warning);
+
+    border: none;
+
+    width: auto;
+
+    &:hover {
+        background: none;
+        border: 1px solid var(--border);
+        color: white;
+    }
 }
 
 @media (width <= 400px) {
