@@ -30,6 +30,20 @@ export type bookData = {
     location: string
 }
 
+const dbColumns = {
+    title: "STRING",
+    author: "STRING",
+    isbn: "STRING",
+    translator: "STRING",
+    location: "STRING",
+    pubDate: "STRING",
+    pageCount: "STRING",
+    genre: "STRING",
+    format: "STRING",
+    originalLanguage: "STRING",
+    coverArt: "STRING"
+} as Record<string, string>;
+
 async function initDB() {
     if (!db) {
         db = new Database("library.sqlite")
@@ -53,20 +67,6 @@ async function initDB() {
             originalLanguage STRING, 
             coverArt STRING
         )`);
-
-        const dbColumns = {
-            title: "STRING",
-            author: "STRING",
-            isbn: "STRING",
-            translator: "STRING",
-            location: "STRING",
-            pubDate: "STRING",
-            pageCount: "STRING",
-            genre: "STRING",
-            format: "STRING",
-            originalLanguage: "STRING",
-            coverArt: "STRING"
-        } as Record<string, string>;
 
         for (const column of Object.keys(dbColumns)) {
             if (!(await hasColumn("books", column))) {
@@ -127,6 +127,18 @@ export async function verifyUser(username: string, password: string): Promise<bo
     return auth;
 }
 
+export async function deleteBook(id: number): Promise<boolean> {
+    if (!db) return false;
+    db.run("DELETE FROM books WHERE id = ?", [id])
+    return true;
+}
+
+export async function updateBook(bookId: number, updatedData: Partial<bookData>): Promise<boolean> {
+    if (!db) return false;
+    const values = Object.values(updatedData);
+    db.run(`UPDATE books SET ${Object.keys(updatedData).map(key => `${key} = ?`).join(", ")} WHERE id = ?`, [...values, bookId]);
+    return true;
+}
 export async function getLargestBookID() {
     if (!db) return;
     const largestBookId = db.query("SELECT MAX(id) FROM books").get();

@@ -300,7 +300,7 @@ h1 {
 
         background: var(--bg);
 
-        transition: transform 150ms ease;
+        transition: all 150ms ease;
 
         align-items: center;
         justify-content: center;

@@ -1,9 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { bookData } from "@/app/lib/database";
+import { bookData, deleteBook, updateBook } from "@/app/lib/database";
 import Icon from "@mdi/react";
 import { mdiDelete } from "@mdi/js";
+import { useRouter } from "next/navigation";
 
 export function BookModal(
     { book, modalOpen, setModalOpen }: 
@@ -25,9 +26,55 @@ export function BookModal(
     const [originalLanguage, setOriginalLanguage] = useState(book.originalLanguage);
     const [coverArt, setCoverArt] = useState<string | null>(null);
 
+    const router = useRouter();
+
     function onSubmit(e: React.FormEvent) {
         e.preventDefault();
         setModalOpen(false);
+        router.refresh();
+    }
+
+    function updateBookCallback() {
+        if (book !== null && typeof book.id === "number") {
+            let updatedValues: Partial<bookData> = {};
+            if (title != book.title) {
+                updatedValues.title = title;
+            }
+            if (author != book.author) {
+                updatedValues.author = author;
+            }
+            if (isbn != book.isbn) {
+                updatedValues.isbn = isbn;
+            }
+            if (translator != book.translator) {
+                updatedValues.translator = translator;
+            }
+            if (pubDate != book.pubDate) {
+                updatedValues.pubDate = pubDate;
+            }
+            if (pageCount != book.pageCount) {
+                updatedValues.pageCount = pageCount;
+            }
+            if (bookLocation != book.location) {
+                updatedValues.location = bookLocation;
+            }
+            if (genre != book.genre) {
+                updatedValues.genre = genre;
+            }
+            if (format != book.format) {
+                updatedValues.format = format;
+            }
+            if (originalLanguage != book.originalLanguage) {
+                updatedValues.originalLanguage = originalLanguage;
+            }
+            updateBook(book.id, updatedValues);
+        }
+    }
+
+    function removeBookCallback() {
+        if (book !== null && typeof book.id === "number") {
+            deleteBook(book.id);
+        }
     }
 
     return (
@@ -69,8 +116,8 @@ export function BookModal(
                                 <input value={originalLanguage} onChange={(e) => setOriginalLanguage(e.target.value)} type="text" id="originalLanguage" name="originalLanguage" placeholder="Original Language"/>
                             </div>
                             <div className="horizontal">
-                                <button type="submit" className="spaced">Save</button>
-                                <button className="delete"><Icon path={mdiDelete} size="16px"></Icon></button>
+                                <button type="submit" className="spaced" onClick={updateBookCallback}>Save</button>
+                                <button className="delete" onClick={removeBookCallback}><Icon path={mdiDelete} size="16px"></Icon></button>
                             </div>
                             
                         </form>
