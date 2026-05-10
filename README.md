@@ -1,6 +1,9 @@
 # Librarian
 *The library management app built for people.*
 
+> [!NOTE]
+> This app is still in active development and not in a completely fit state to be deployed. Here be dragons!
+
 ## Getting Started
 The fastest way to get started with librarian is with Docker.
 
