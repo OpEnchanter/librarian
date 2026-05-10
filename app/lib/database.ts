@@ -1,8 +1,17 @@
 "use server"
 import { Database } from "bun:sqlite";
 import { NextResponse } from "next/server";
+import { SQL } from "bun";
 
-let db: Database | null = null;
+let config = await Bun.file("config.json").json();
+if (!config.database) {
+    config.database = {
+        user: "librarian",
+        password: "undefined",
+        name: "librarian"
+    }
+}
+let sql = new SQL(`postgres://${config.database.user}:${config.database.password}@localhost:5432/${config.database.name}`);
 
 type dbQuery = {
     "COUNT(*)": number,
@@ -31,95 +40,96 @@ export type bookData = {
 }
 
 const dbColumns = {
-    title: "STRING",
-    author: "STRING",
-    isbn: "STRING",
-    translator: "STRING",
-    location: "STRING",
-    pubDate: "STRING",
-    pageCount: "STRING",
-    genre: "STRING",
-    format: "STRING",
-    originalLanguage: "STRING",
-    coverArt: "STRING"
+    title: "TEXT",
+    author: "TEXT",
+    isbn: "TEXT",
+    translator: "TEXT",
+    location: "TEXT",
+    pubDate: "TEXT",
+    pageCount: "TEXT",
+    genre: "TEXT",
+    format: "TEXT",
+    originalLanguage: "TEXT",
+    coverArt: "TEXT"
 } as Record<string, string>;
 
 async function initDB() {
-    if (!db) {
-        db = new Database("library.sqlite")
-        db.run(`CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT, 
-            username STRING, 
-            password STRING, 
-            permission INTEGER
-        )`)
-        db.run(`CREATE TABLE IF NOT EXISTS books (
-            id INTEGER PRIMARY KEY AUTOINCREMENT, 
-            title STRING, 
-            author STRING, 
-            isbn STRING, 
-            translator STRING,
-            location STRING, 
-            pubDate STRING, 
-            pageCount INTEGER, 
-            genre STRING, 
-            format STRING, 
-            originalLanguage STRING, 
-            coverArt STRING
-        )`);
+    await sql`CREATE TABLE IF NOT EXISTS users (
+        id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY, 
+        username TEXT, 
+        password TEXT, 
+        permission INTEGER
+    )`
+    await sql`CREATE TABLE IF NOT EXISTS books (
+        id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY, 
+        title TEXT, 
+        author TEXT, 
+        isbn TEXT, 
+        translator TEXT,
+        location TEXT, 
+        pubDate TEXT, 
+        pageCount INTEGER, 
+        genre TEXT, 
+        format TEXT, 
+        originalLanguage TEXT, 
+        coverArt TEXT
+    )`;
 
-        for (const column of Object.keys(dbColumns)) {
-            if (!(await hasColumn("books", column))) {
-                db.run(`ALTER TABLE books ADD COLUMN ${column} ${dbColumns[column] as string}`.trim());
-            }
+    for (const column of Object.keys(dbColumns)) {
+        if (!(await hasColumn("books", column))) {
+            const columnName = sql(column);
+            const columnType = sql.unsafe(dbColumns[column] as string);
+            await sql`ALTER TABLE books ADD COLUMN ${columnName} ${columnType}`;
         }
-
-        console.log("[Library] init");
     }
+
+    console.log("[Library] init");
 }
 
 initDB();
 
 export async function hasColumn(table: string, column: string) {
-    if (!db) return false;
-    const columns = db.query(`PRAGMA table_info(${table})`).all() as Array<{ name: string }>;
-    return columns.some(c => c.name === column);
+    const [row] = await sql`
+        SELECT EXISTS (
+            SELECT 1
+            FROM information_schema.columns
+            WHERE table_schema = 'public'
+                AND table_name = ${table}
+                AND column_name = ${column}
+        ) AS exists
+    ` as Array<{ exists: boolean }>
+    return row.exists;
 }
 
 export async function getUserCount() {
-    if (!db) return 0;
-    const numUsers = db.query("SELECT COUNT(*) FROM users").get();
-    return (numUsers as dbQuery)["COUNT(*)"];
+    const res = await sql`SELECT COUNT(*) AS total FROM users`;
+    return Number(res[0].total);
 }
 
 export async function getLargestUserID() {
-    if (!db) return;
-    const largestUid = db.query("SELECT MAX(id) FROM users").get();
-    return (largestUid as dbQuery)["MAX(id)"];
+    
+    const res = await sql`SELECT MAX(id) AS id FROM users`;
+    return Number(res[0].id);
 }
 
 export async function addUser(username: string, password: string, permission: number) {
-    if (!db) return;
+    
     let maxUid = await getLargestUserID();
     let permissionNumber = permission;
     if (maxUid === null) {
         permissionNumber = 2
         maxUid = 0
     }
-    db.run(
-        `INSERT INTO users (username, password, permission) VALUES (?, ?, ?)`, 
-        [username, await Bun.password.hash(password), permissionNumber]);
+    await sql`INSERT INTO users (username, password, permission) VALUES (${username}, ${await Bun.password.hash(password)}, ${permissionNumber})`;
 }
 
 export async function getUser(username: string) {
-    if (!db) return;
-    const userData = db.query("SELECT * FROM users WHERE username = ?").get(username);
+    const [userData] = await sql`SELECT * FROM users WHERE username = ${username}`;
     return userData;
 }
 
 export async function verifyUser(username: string, password: string): Promise<boolean> {
-    if (!db) return false;
-    const user = db.query(`SELECT * FROM users WHERE username = ?`).get(username) as userData;
+    const [user] = await sql`SELECT * FROM users WHERE username = ${username}` as Array<userData>;
     if (user === null) {
         return false;
     }
@@ -128,33 +138,26 @@ export async function verifyUser(username: string, password: string): Promise<bo
 }
 
 export async function deleteBook(id: number): Promise<boolean> {
-    if (!db) return false;
-    db.run("DELETE FROM books WHERE id = ?", [id])
+    await sql`DELETE FROM books WHERE id = ${id}`
     return true;
 }
 
 export async function updateBook(bookId: number, updatedData: Partial<bookData>): Promise<boolean> {
-    if (!db) return false;
     const values = Object.values(updatedData);
-    db.run(`UPDATE books SET ${Object.keys(updatedData).map(key => `${key} = ?`).join(", ")} WHERE id = ?`, [...values, bookId]);
+    await sql`UPDATE books SET ${sql(updatedData)} WHERE id = ${bookId}`;
     return true;
 }
 export async function getLargestBookID() {
-    if (!db) return;
-    const largestBookId = db.query("SELECT MAX(id) FROM books").get();
+    
+    const largestBookId = await sql`SELECT MAX(id) FROM books`;
     return (largestBookId as dbQuery)["MAX(id)"];
 }
 
 export async function addBook(data: bookData) {
-    if (!db) return;
-    db.run(
-        "INSERT INTO books (title, author, isbn, translator, pubDate, pageCount, genre, format, originalLanguage, coverArt, location) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", 
-        [data.title, data.author, data.isbn, data.translator, data.pubDate, data.pageCount, data.genre, data.format, data.originalLanguage, data.coverArt, data.location]
-    );
+    await sql`INSERT INTO books (title, author, isbn, translator, pubDate, pageCount, genre, format, originalLanguage, coverArt, location) VALUES (${data.title}, ${data.author}, ${data.isbn}, ${data.translator}, ${data.pubDate}, ${data.pageCount}, ${data.genre}, ${data.format}, ${data.originalLanguage}, ${data.coverArt}, ${data.location})`;
 }
 
 export async function getBooks() {
-    if (!db) return;
-    const books = db.query("SELECT * FROM books").all();
+    const books = sql`SELECT * FROM books`;
     return books;
 }

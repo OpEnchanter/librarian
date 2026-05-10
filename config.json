@@ -1,0 +1,7 @@
+{
+    "database": {
+        "user": "librarian",
+        "password": "example_password",
+        "name": "librarian"
+    }
+}
